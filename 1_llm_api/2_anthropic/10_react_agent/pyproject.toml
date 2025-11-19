@@ -1,0 +1,11 @@
+[project]
+name = "anthropic-react-agent"
+version = "0.1.0"
+description = "A ReAct (Reason and Act) AI agent using Anthropic Claude"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "anthropic>=0.44.0",
+    "python-dotenv>=1.0.1",
+    "yfinance>=0.2.54",
+]

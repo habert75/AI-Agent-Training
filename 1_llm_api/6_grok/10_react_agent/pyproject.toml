@@ -1,0 +1,11 @@
+[project]
+name = "grok-react-agent"
+version = "0.1.0"
+description = "A ReAct (Reason and Act) AI agent using xAI Grok"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "openai>=1.66.3",
+    "python-dotenv>=1.0.1",
+    "yfinance>=0.2.54",
+]
