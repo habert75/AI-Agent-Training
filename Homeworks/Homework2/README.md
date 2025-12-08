@@ -1,6 +1,6 @@
 # Retail Assistant Agent (with Slack)
 
-This n8n workflow (`retail assistant agent with slack.json`) runs an AI agent that queries an Elasticsearch dataset and posts concise summaries to Slack.
+This n8n workflow runs an AI agent that queries an Elasticsearch dataset and posts concise summaries to Slack.
 
 
 Configuration
@@ -15,7 +15,7 @@ Key behavior and safety
 - To avoid OpenAI rate-limit/token errors, the system prompt asks the agent to summarize results (max ~400 tokens) and not to return full document dumps.
 
 Steps how to run the flow:
-1. Import or open `retail assistant agent with slack.json` in n8n.
+1. Import or open `Retail Assistant Agent.json` in n8n.
 2. Configure credentials (Slack, Elasticsearch, OpenAI) in n8n.
 3. Run a test chat message via the agent trigger or use the n8n Test UI.
 4. Inspect the `Format Slack message` node execution data to verify `{ channel, text }
