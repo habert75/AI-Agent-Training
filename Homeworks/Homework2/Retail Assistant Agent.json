@@ -1,0 +1,199 @@
+{
+  "name": "Retail Assistant Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -64,
+        -128
+      ],
+      "name": "When chat message received",
+      "webhookId": "387cf8a5-4279-4055-a376-9513931647a7",
+      "id": "54616368-f937-471d-ae4d-a60a1c2807c5"
+    },
+    {
+      "parameters": {
+        "content": "# Prompts\n\nwhich product category do we have in database? can you give the number of products available by category?",
+        "height": 280,
+        "width": 420
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -624,
+        -112
+      ],
+      "typeVersion": 1,
+      "name": "Sticky Note",
+      "id": "cebb4b39-00b5-4c12-8a2b-b1eb0e99c101"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "You are a helpful assistant and an Elasticsearch query assistant for an e-commerce analytics platform. Use the Elasticsearch Query Tool to search and analyze data across multiple indices. Use the Slack tool to send formatted results to a specified Slack channel.\n\nIMPORTANT: To avoid excessive LLM usage and rate limits, NEVER send full document contents, raw result dumps, or very long lists back into the LLM. When posting results to Slack, produce a concise summary no longer than 400 tokens (about 2500 characters) and include at most the top 5 items. If the query returns many hits, include only an aggregated summary and the top 3 items by relevance.\n\nIMPORTANT: If you are returning a tool call, return only the tool call, NO ADDITIONAL TEXT IN RESPONSE. Tools available: `elasticsearch` and `slack`.\n\nSlack tool usage: when invoking the Slack tool, return the tool call only with the node name `Send message to Slack` and a JSON object with `channel` (channel name, e.g. `#all-ai-agents`) and `text` (the message body). The `text` field must be a short summary (<= 400 tokens). Example tool call (ONLY the tool call):\n{\n  \"name\": \"Send message to Slack\",\n  \"input\": {\"channel\": \"#all-ai-agents\", \"text\": \"Top 3 matching products: 1) Solar Charger X - $29, 2) Solar Charger Y - $39, 3) Solar Charger Z - $49. Summary: Compact, high-efficiency chargers suitable for camping...\"}\n}\n\nIf the agent needs to format Slack messages, keep them short and use bullets. Do not include large JSON blobs."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        176,
+        -128
+      ],
+      "id": "c8c35613-251e-4447-a766-63af0a274481",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        48,
+        80
+      ],
+      "id": "e72f3176-2e8a-457c-8974-557a9cb71939",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "bvJFopQSRBL5g1LH",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "returnAll": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Return_All', ``, 'boolean') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.elasticsearchTool",
+      "typeVersion": 1,
+      "position": [
+        432,
+        96
+      ],
+      "name": "Get many documents in Elasticsearch",
+      "id": "64559fee-a849-4962-a90a-809c8576977b",
+      "credentials": {
+        "elasticsearchApi": {
+          "id": "Xgci5BPEiWNhl0Q5",
+          "name": "Elasticsearch account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "const payload = items[0].json || {}; let p = payload; if(Array.isArray(p) && p.length) p = p[0]; let text = ''; if(typeof p === 'string') text = p; else if(p && typeof p === 'object'){ if(p.output){ text = (typeof p.output === 'string') ? p.output : (p.output.text || p.output.output || p.output.body || (typeof p.output === 'object' ? JSON.stringify(p.output) : '')); } if(!text && p.input && p.input.text) text = p.input.text; if(!text && p.text) text = p.text; if(!text && p.body) text = p.body; if(!text && p.message) text = p.message; } if(!text && Array.isArray(payload.results)) text = payload.results.slice(0,3).map(function(r,i){ return (i+1)+') '+(r.name||r.title||r.id); }).join('\\n'); if(!text && payload.hits && Array.isArray(payload.hits.hits)) text = payload.hits.hits.slice(0,3).map(function(h,i){ return (i+1)+') '+((h._source && (h._source.name||h._source.title)) ? (h._source.name||h._source.title) : (h._id||JSON.stringify(h._source))); }).join('\\n'); if(!text && payload.query) text = 'Search query: '+payload.query; if(!text) text = 'No text provided by agent to post to Slack.'; if(text.length > 2000) text = text.substring(0,1997) + '...'; return [{ json: { channel: (p && p.input && p.input.channel) || p.channel || '#all-ai-agents', text } }];"
+      },
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        560,
+        -128
+      ],
+      "name": "Format Slack message",
+      "id": "e8cb56cd-9e87-4a02-bbc6-4e8d9a83b0f6"
+    },
+    {
+      "parameters": {
+        "channel": "={{ $json[\"channel\"] || '#all-ai-agents' }}",
+        "text": "={{ ($json[\"text\"] || '').toString().substring(0,2000) }}",
+        "otherOptions": {},
+        "attachments": []
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 1,
+      "position": [
+        832,
+        -128
+      ],
+      "name": "Send message to Slack",
+      "id": "82b50c6d-eef4-46b0-b9f3-b31c7174c9e9",
+      "credentials": {
+        "slackApi": {
+          "id": "5YrJP6X0eXM1z66K",
+          "name": "Slack account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Format Slack message": {
+      "main": [
+        [
+          {
+            "node": "Send message to Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Format Slack message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many documents in Elasticsearch": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "7f10b80b-9f87-4ffd-8c3c-09384ec51e17",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c1681ef0173b051053cf0eea77ca48d66054c4dc9743888f0c6d8c04d9206c2c"
+  },
+  "id": "xWePq2ht49QSNcj5",
+  "tags": []
+}
