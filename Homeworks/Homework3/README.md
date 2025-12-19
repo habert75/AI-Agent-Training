@@ -1,4 +1,4 @@
-# background check Agent
+# Background Check Agent
 
 This directory contains `background_check_agent.py`, an agent that:
 - Retrieves documents about an individual from a ChromaDB vector store.
